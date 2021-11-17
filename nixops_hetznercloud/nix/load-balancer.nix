@@ -5,49 +5,48 @@ with import ./lib.nix lib;
 with lib;
 
 let
-  loadBalancerHealthcheckOptions =
-    { config, ... }:
-    {
-      options = {
-        protocol = mkOption {
-          default = "http";
-          type = types.enum ["tcp" "http" ];
-          description = ''
-            Protocol used by the health check. Choices are 'http' or 'tcp'.
-          '';
-        };
-        port = mkOption {
-          default = 80;
-          type = types.int;
-          description = ''
-            The port the health check request is forwarded to.
-          '';
-        };
-        interval = mkOption {
-          default = 15;
-          type = types.int;
-          description = ''
-            Health check interval in seconds. Limits are from 3 seconds to 60
-            seconds.
-          '';
-        };
-        timeout = mkOption {
-          default = 10;
-          type = types.int;
-          description = ''
-            Health check timeout in seconds. Limits are from 1 second to the health
-            check interval.
-          '';
-        };
-        retries = mkOption {
-          default = 3;
-          type = types.enum [ 1 2 3 4 5 ];
-          description = "Health check retries. Valid values are from 1 to 5.";
-        };
-        http = mkOption {
-          default = null;
-          description = "Options for health checks using HTTP.";
-          type = with types; nullOr (submodule {
+  loadBalancerHealthcheckOptions = { config, ... }: {
+    options = {
+      protocol = mkOption {
+        default = "http";
+        type = types.enum [ "tcp" "http" ];
+        description = ''
+          Protocol used by the health check. Choices are 'http' or 'tcp'.
+        '';
+      };
+      port = mkOption {
+        default = 80;
+        type = types.int;
+        description = ''
+          The port the health check request is forwarded to.
+        '';
+      };
+      interval = mkOption {
+        default = 15;
+        type = types.int;
+        description = ''
+          Health check interval in seconds. Limits are from 3 seconds to 60
+          seconds.
+        '';
+      };
+      timeout = mkOption {
+        default = 10;
+        type = types.int;
+        description = ''
+          Health check timeout in seconds. Limits are from 1 second to the health
+          check interval.
+        '';
+      };
+      retries = mkOption {
+        default = 3;
+        type = types.enum [ 1 2 3 4 5 ];
+        description = "Health check retries. Valid values are from 1 to 5.";
+      };
+      http = mkOption {
+        default = null;
+        description = "Options for health checks using HTTP.";
+        type = with types;
+          nullOr (submodule {
             options = {
               domain = mkOption {
                 example = "example.com";
@@ -60,7 +59,7 @@ let
                 description = "Path to query for the health check.";
               };
               response = mkOption {
-                default = "{ \\\"status\\\": \\\"ok\\\" }";
+                default = ''{ \"status\": \"ok\" }'';
                 type = types.str;
                 description = ''
                   Custom string that must be contained as substring in HTTP response
@@ -83,61 +82,60 @@ let
               };
             };
           });
-        };
       };
     };
-      
-  loadBalancerServiceOptions =
-    { config, ... }:
-    {
-      options = {   
-        protocol = mkOption {
-          default = "http";
-          type = types.enum [ "tcp" "http" "https" ];
-          description = "Protocol of the underlying traffic for this service.";
-        };
-        listenPort = mkOption {
-          default = 80;
-          type = types.int;
-          description = ''
-            The port the service listens on, i.e. the port users can connect to. For
-            HTTP or HTTPS services, the default values are 80 or 443, respectively.
-          '';
-        };
-        destinationPort = mkOption {
-          default = 80;
-          type = types.int;
-          description = ''
-            The port traffic is forwarded to, i.e. the port the targets are
-            listening and accepting connections on. For HTTP or HTTPS services, 
-            the default values are 80 or 443, respectively.
-          '';
-        };
-        healthCheck = mkOption {
-          default = null;
-          type = with types; nullOr (submodule loadBalancerHealthcheckOptions);
-          description = ''
-            Configuration for health checks.
-            Checks the system status of target servers.
-          '';
-        };
-        proxyProtocol = mkOption {
-          default = false;
-          type = types.bool;
-          description = ''
-            Enable the PROXY protocol. Please note that the software running on
-            the targets and handling connections needs to support the PROXY
-            protocol.
-          '';
-        };
-        stickySessions = mkOption {
-          default = null;
-          description = ''
-            Configuration for Sticky Sessions. Binds a session to a particular
-            target server for a configurable time using a cookie. Valid only for
-            HTTP/HTTPS services.
-          '';
-          type = with types; nullOr (submodule {
+  };
+
+  loadBalancerServiceOptions = { config, ... }: {
+    options = {
+      protocol = mkOption {
+        default = "http";
+        type = types.enum [ "tcp" "http" "https" ];
+        description = "Protocol of the underlying traffic for this service.";
+      };
+      listenPort = mkOption {
+        default = 80;
+        type = types.int;
+        description = ''
+          The port the service listens on, i.e. the port users can connect to. For
+          HTTP or HTTPS services, the default values are 80 or 443, respectively.
+        '';
+      };
+      destinationPort = mkOption {
+        default = 80;
+        type = types.int;
+        description = ''
+          The port traffic is forwarded to, i.e. the port the targets are
+          listening and accepting connections on. For HTTP or HTTPS services,
+          the default values are 80 or 443, respectively.
+        '';
+      };
+      healthCheck = mkOption {
+        default = null;
+        type = with types; nullOr (submodule loadBalancerHealthcheckOptions);
+        description = ''
+          Configuration for health checks.
+          Checks the system status of target servers.
+        '';
+      };
+      proxyProtocol = mkOption {
+        default = false;
+        type = types.bool;
+        description = ''
+          Enable the PROXY protocol. Please note that the software running on
+          the targets and handling connections needs to support the PROXY
+          protocol.
+        '';
+      };
+      stickySessions = mkOption {
+        default = null;
+        description = ''
+          Configuration for Sticky Sessions. Binds a session to a particular
+          target server for a configurable time using a cookie. Valid only for
+          HTTP/HTTPS services.
+        '';
+        type = with types;
+          nullOr (submodule {
             options = {
               cookieName = mkOption {
                 default = "HCLBSTICKY";
@@ -156,36 +154,34 @@ let
               };
             };
           });
-        };
-        certificates = mkOption {
-          type = types.listOf (resource "hetznercloud-certificate");
-          description = ''
-            TODO Valid only for https services.
-          '';
-        };
-        redirectHttp = mkOption {
-          default = false;
-          type = types.bool;
-          description = ''
-            Redirect all HTTP requests to this HTTPS service. Valid only for HTTPS
-            services.
-          '';
-        };
+      };
+      certificates = mkOption {
+        type = types.listOf (resource "hetznercloud-certificate");
+        description = ''
+          TODO Valid only for https services.
+        '';
+      };
+      redirectHttp = mkOption {
+        default = false;
+        type = types.bool;
+        description = ''
+          Redirect all HTTP requests to this HTTPS service. Valid only for HTTPS
+          services.
+        '';
       };
     };
+  };
 
-in
-
-{
+in {
 
   options = {
 
     location = mkOption {
       example = "nbg1";
-      type = type.enum ["nbg1" "fsn1" "hel1"];
+      type = type.enum [ "nbg1" "fsn1" "hel1" "ash" ];
       description = ''
         The Hetzner Cloud location where the load balancer should be created.
-        Options are 'nbg1', 'fsn1', or 'hel1'.
+        Options are 'nbg1', 'fsn1', 'hel1', 'ash'.
       '';
     };
 
@@ -210,7 +206,7 @@ in
     };
 
     targets = mkOption {
-      default = [];
+      default = [ ];
       example = [ "machines.httpserver1" "machines.httpserver2" ];
       type = types.listOf machine;
       description = ''
@@ -219,7 +215,7 @@ in
     };
 
     services = mkOption {
-      default = [];
+      default = [ ];
       type = with types; listOf (submodule loadBalancerServiceOptions);
       description = ''
         Services allow you to decide how traffic will be routed from the Load
